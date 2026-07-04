@@ -1,5 +1,6 @@
 import type { GameState, PlayerClass } from "@/types";
 import { getClass } from "@/data/classes";
+import { getItem } from "@/entities/items";
 
 /** Simple, tunable XP curve: 100 * level^1.5, rounded to nearest 10. */
 function xpForLevel(level: number): number {
@@ -11,6 +12,13 @@ export class CharacterSystem {
     const def = getClass(playerClass);
     const maxHealth = def.hitDie * 3 + def.baseStats.constitution;
     const maxMana = def.manaDie * 3 + def.baseStats.intelligence;
+    const equipment: GameState["player"]["equipment"] = {};
+    for (const itemId of def.startingItemIds) {
+      const item = getItem(itemId);
+      if (item?.equipSlot && !equipment[item.equipSlot]) {
+        equipment[item.equipSlot] = itemId;
+      }
+    }
     return {
       name,
       class: playerClass,
@@ -24,7 +32,7 @@ export class CharacterSystem {
       maxMana,
       gold: 20,
       inventory: def.startingItemIds.map((itemId) => ({ itemId, quantity: 1 })),
-      equipment: {},
+      equipment,
       currentLocationId: "village_square",
       torchLit: false,
       turnsSinceRest: 0,

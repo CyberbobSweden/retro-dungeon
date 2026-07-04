@@ -8,6 +8,7 @@ import { StatusBar } from "@/ui/StatusBar";
 import { Terminal } from "@/ui/Terminal";
 import { Sidebar } from "@/ui/Sidebar";
 import { saveSystem } from "@/systems/save/SaveSystem";
+import { useViewportHeight } from "@/ui/useViewportHeight";
 
 const INTRO_TEXT =
   "You have no map.\n\nThe village of Millbrook is quiet around you. Somewhere south, " +
@@ -15,6 +16,7 @@ const INTRO_TEXT =
   "Type `help` for commands, or just start with `look`.";
 
 export default function App() {
+  useViewportHeight();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [engine, setEngine] = useState<GameEngine | null>(null);
 
@@ -39,7 +41,9 @@ export default function App() {
     (input: string) => {
       if (!engine) return;
       engine.execute(input);
-      setGameState({ ...engine.getState() });
+      const latest = engine.getState();
+      setGameState({ ...latest });
+      saveSystem.saveToLocalStorage(latest);
     },
     [engine]
   );
@@ -54,30 +58,35 @@ export default function App() {
 
   if (!gameState || !engine) {
     return (
-      <div className="relative min-h-screen bg-crt-bg">
+      <div className="relative overflow-hidden bg-crt-bg" style={{ height: "var(--app-height, 100dvh)" }}>
         <div className="crt-overlay" />
         <div className="crt-vignette" />
-        <CharacterCreation onCreate={startGame} />
         {autoLoadIfAvailable && (
-          <button
-            className="fixed bottom-4 right-4 z-10 border border-crt-amberDim/50 bg-crt-panel px-3 py-2 font-mono text-xs text-crt-amber hover:bg-crt-amberDim/30"
-            onClick={() => {
-              const loaded = saveSystem.loadFromLocalStorage();
-              if (loaded) handleLoadState(loaded);
-            }}
-          >
-            Continue saved game
-          </button>
+          <div className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center px-4">
+            <button
+              className="pointer-events-auto border border-crt-amber bg-crt-panel px-4 py-2 font-mono text-xs uppercase tracking-widest text-crt-amber hover:bg-crt-amberDim/30"
+              onClick={() => {
+                const loaded = saveSystem.loadFromLocalStorage();
+                if (loaded) handleLoadState(loaded);
+              }}
+            >
+              ▶ Continue saved game
+            </button>
+          </div>
         )}
+        <CharacterCreation onCreate={startGame} />
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-crt-bg p-3 sm:p-4">
+    <div
+      className="relative overflow-hidden bg-crt-bg p-3 sm:p-4"
+      style={{ height: "var(--app-height, 100dvh)" }}
+    >
       <div className="crt-overlay" />
       <div className="crt-vignette" />
-      <div className="mx-auto flex h-[calc(100vh-2rem)] max-w-6xl flex-col gap-3">
+      <div className="mx-auto flex h-full max-w-6xl flex-col gap-3">
         <StatusBar state={gameState} />
         <div className="grid flex-1 grid-cols-1 gap-3 overflow-hidden md:grid-cols-[1fr_320px]">
           <Terminal log={gameState.log} onSubmit={handleCommand} />

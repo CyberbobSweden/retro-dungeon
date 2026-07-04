@@ -24,11 +24,14 @@ export const VERB_SYNONYMS: Record<string, string> = {
   // Looking / senses
   look: "look",
   l: "look",
-  examine: "look",
-  x: "look",
+  view: "look",
+  examine: "inspect",
+  x: "inspect",
+  check: "inspect",
   inspect: "inspect",
   study: "inspect",
   search: "search",
+  explore: "search",
   listen: "listen",
   hear: "listen",
   smell: "smell",
@@ -62,10 +65,16 @@ export const VERB_SYNONYMS: Record<string, string> = {
   hit: "attack",
   stab: "attack",
   strike: "attack",
+  slay: "attack",
+  murder: "attack",
   shoot: "shoot",
+  fire: "shoot",
   throw: "throw",
+  hurl: "throw",
   flee: "flee",
+  retreat: "flee",
   cast: "cast",
+  spell: "cast",
 
   // Consumables
   drink: "drink",
@@ -109,6 +118,9 @@ export const VERB_SYNONYMS: Record<string, string> = {
   // Meta / system
   stats: "stats",
   character: "stats",
+  sheet: "stats",
+  spells: "spells",
+  abilities: "spells",
   quests: "quests",
   journal: "journal",
   map: "map",
@@ -147,10 +159,11 @@ export const STOP_WORDS = new Set([
   "the",
   "a",
   "an",
-  "at",
-  "to",
   "my",
   "please",
+  "around",
+  "here",
+  "now",
 ]);
 
 /** Prepositions that separate direct object from indirect object. */

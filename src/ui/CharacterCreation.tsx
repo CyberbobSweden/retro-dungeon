@@ -11,7 +11,7 @@ export function CharacterCreation({ onCreate }: Props) {
   const [selectedClass, setSelectedClass] = useState<PlayerClass | null>(null);
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4">
+    <div className="flex h-full w-full items-center justify-center overflow-y-auto p-4">
       <div className="w-full max-w-2xl border border-crt-amberDim/50 bg-crt-panel/60 p-6 font-mono text-crt-amber">
         <pre className="mb-4 text-center text-[10px] leading-tight opacity-80 sm:text-xs">
 {String.raw`##################################################

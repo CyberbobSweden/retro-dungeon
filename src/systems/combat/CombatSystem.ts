@@ -10,6 +10,7 @@ export interface CombatOutcome {
   lines: string[];
   monsterDefeated: boolean;
   playerDefeated: boolean;
+  damageDealt: number;
 }
 
 /**
@@ -51,7 +52,7 @@ export class CombatSystem {
           lines.push(`The ${monster.name} dropped something.`);
         }
       }
-      return { lines, monsterDefeated: true, playerDefeated: false };
+      return { lines, monsterDefeated: true, playerDefeated: false, damageDealt: mitigated };
     }
 
     // Monster retaliates
@@ -62,10 +63,10 @@ export class CombatSystem {
     if (state.player.health <= 0) {
       state.player.health = 0;
       lines.push("Everything goes dark...");
-      return { lines, monsterDefeated: false, playerDefeated: true };
+      return { lines, monsterDefeated: false, playerDefeated: true, damageDealt: mitigated };
     }
 
-    return { lines, monsterDefeated: false, playerDefeated: false };
+    return { lines, monsterDefeated: false, playerDefeated: false, damageDealt: mitigated };
   }
 
   attemptFlee(): { success: boolean; text: string } {

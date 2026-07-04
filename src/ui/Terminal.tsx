@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { LogEntry } from "@/types";
+import { useVoiceControl } from "@/ui/useVoiceControl";
 
 interface Props {
   log: LogEntry[];
@@ -20,6 +21,32 @@ export function Terminal({ log, onSubmit }: Props) {
   const [historyIdx, setHistoryIdx] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputRowRef = useRef<HTMLDivElement>(null);
+  const lastSpokenTurn = useRef<number>(-1);
+
+  function runCommand(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    onSubmit(trimmed);
+    setHistory((h) => [...h, trimmed]);
+    setHistoryIdx(null);
+    setInput("");
+  }
+
+  const voice = useVoiceControl((transcript) => runCommand(transcript));
+
+  // Hands-free loop: whenever a new response lands while hands-free mode
+  // is on, read it aloud, then start listening again automatically.
+  useEffect(() => {
+    if (!voice.handsFree) return;
+    const last = log[log.length - 1];
+    if (!last || last.turn === lastSpokenTurn.current) return;
+    lastSpokenTurn.current = last.turn;
+    voice.speak(last.text, () => {
+      if (voice.handsFree) voice.listenOnce();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [log, voice.handsFree]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -29,18 +56,20 @@ export function Terminal({ log, onSubmit }: Props) {
     inputRef.current?.focus();
   }, []);
 
-  function submit() {
-    const trimmed = input.trim();
-    if (!trimmed) return;
-    onSubmit(trimmed);
-    setHistory((h) => [...h, trimmed]);
-    setHistoryIdx(null);
-    setInput("");
-  }
+  // When the on-screen keyboard opens, the visible viewport shrinks. Make sure
+  // the input row (and not just the log) stays on-screen instead of sliding
+  // out from under the keyboard.
+  useEffect(() => {
+    const scrollInputIntoView = () => {
+      inputRowRef.current?.scrollIntoView({ block: "end" });
+    };
+    window.visualViewport?.addEventListener("resize", scrollInputIntoView);
+    return () => window.visualViewport?.removeEventListener("resize", scrollInputIntoView);
+  }, []);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") {
-      submit();
+      runCommand(input);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       if (history.length === 0) return;
@@ -76,7 +105,34 @@ export function Terminal({ log, onSubmit }: Props) {
           </pre>
         ))}
       </div>
-      <div className="flex items-center gap-2 border-t border-crt-amberDim/40 px-4 py-3">
+      {voice.supported && (
+        <div className="flex items-center gap-2 border-t border-crt-amberDim/40 px-4 py-2 text-[10px] uppercase tracking-widest">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              voice.listenOnce();
+            }}
+            disabled={voice.listening || voice.handsFree}
+            className={`border px-2 py-1 font-mono ${
+              voice.listening ? "border-crt-red text-crt-red" : "border-crt-amberDim/50 text-crt-amberDim hover:text-crt-amber"
+            } disabled:opacity-40`}
+          >
+            {voice.listening ? "● Listening…" : "🎤 Voice"}
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              voice.toggleHandsFree();
+            }}
+            className={`border px-2 py-1 font-mono ${
+              voice.handsFree ? "border-crt-green text-crt-green" : "border-crt-amberDim/50 text-crt-amberDim hover:text-crt-amber"
+            }`}
+          >
+            {voice.handsFree ? "🔊 Hands-free ON" : "Hands-free (driving mode)"}
+          </button>
+        </div>
+      )}
+      <div ref={inputRowRef} className="flex items-center gap-2 border-t border-crt-amberDim/40 px-4 py-3">
         <span className="text-crt-amber">{">"}</span>
         <input
           ref={inputRef}

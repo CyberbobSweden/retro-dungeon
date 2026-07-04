@@ -49,6 +49,10 @@ export class InventorySystem {
     return `You unequip the ${item?.name ?? "item"}.`;
   }
 
+  equippedWeaponId(state: GameState): string | undefined {
+    return state.player.equipment.mainHand;
+  }
+
   equippedWeaponDamage(state: GameState): [number, number] {
     const weaponId = state.player.equipment.mainHand;
     const weapon = weaponId ? getItem(weaponId) : undefined;

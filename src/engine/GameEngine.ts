@@ -120,6 +120,8 @@ export class GameEngine {
         return this.handleBuy(cmd);
       case "stats":
         return { text: this.renderStats(), turnConsumed: false };
+      case "spells":
+        return { text: this.renderSpells(), turnConsumed: false };
       case "quests":
         return { text: questSystem.listDescription(this.state), turnConsumed: false };
       case "journal":
@@ -406,7 +408,14 @@ export class GameEngine {
     const monster = getMonster(monsterId);
     if (!monster) return "";
     this.encounter = { monsterId, currentHealth: monster.health };
-    return `A ${monster.name} blocks your way! ${monster.description}`;
+    const weapon = getItem(inventorySystem.equippedWeaponId(this.state) ?? "");
+    const weaponLine = weapon
+      ? `You're wielding your ${weapon.name}.`
+      : `You're unarmed — try \`equip <weapon>\` or \`attack ${monster.name.toLowerCase()} with <item>\`.`;
+    const spellHint = getClass(this.state.player.class).abilities.length
+      ? " You can also `cast <spell>` (see `spells`), or `flee`."
+      : " You can `flee` if it turns bad.";
+    return `A ${monster.name} blocks your way! ${monster.description}\n${weaponLine}${spellHint}`;
   }
 
   private describeEncounter(): CommandResult {
@@ -433,6 +442,16 @@ export class GameEngine {
     return this.handleCombatTurn({ ...cmd, verb: "attack" });
   }
 
+  /** "attack goblin with sword" / "kill goblin with dagger" — swap weapon on the fly if owned. */
+  private maybeEquipForAttack(cmd: ParsedCommand): string | undefined {
+    if (!cmd.indirectObject) return undefined;
+    const item = inventorySystem.findInInventory(this.state, cmd.indirectObject);
+    if (!item || item.equipSlot !== "mainHand") return undefined;
+    if (this.state.player.equipment.mainHand === item.id) return undefined;
+    inventorySystem.equip(this.state, item.id);
+    return `You draw your ${item.name}.`;
+  }
+
   private handleCast(cmd: ParsedCommand): CommandResult {
     if (!this.encounter) return { text: "There's nothing to cast a spell at.", turnConsumed: false };
     const def = getClass(this.state.player.class);
@@ -455,27 +474,23 @@ export class GameEngine {
     }
     if (cmd.verb === "look") return this.describeEncounter();
 
+    let equipMsg: string | undefined;
+    if (cmd.verb === "attack") {
+      equipMsg = this.maybeEquipForAttack(cmd);
+    }
+
     const outcome = combatSystem.resolvePlayerAttack(this.state, monster, this.encounter.currentHealth, abilityDamage);
+    if (equipMsg) outcome.lines.unshift(equipMsg);
     if (outcome.monsterDefeated) {
       this.state.world.defeatedMonsters.add(`${loc.id}:${this.encounter.monsterId}`);
       this.encounter = null;
     } else {
-      this.encounter.currentHealth -= 0; // health tracked via outcome text; recompute below
-      this.encounter.currentHealth = Math.max(
-        0,
-        this.encounter.currentHealth -
-          Math.max(1, this.parseDamageFromLine(outcome.lines[0]))
-      );
+      this.encounter.currentHealth = Math.max(0, this.encounter.currentHealth - outcome.damageDealt);
     }
     if (outcome.playerDefeated) {
       return { text: [...outcome.lines, this.renderDefeat()].join("\n"), turnConsumed: true, kind: "combat" };
     }
     return { text: outcome.lines.join("\n"), turnConsumed: true, kind: "combat" };
-  }
-
-  private parseDamageFromLine(line: string): number {
-    const match = line.match(/for (\d+) damage/);
-    return match ? Number(match[1]) : 0;
   }
 
   private renderDefeat(): string {
@@ -537,15 +552,28 @@ export class GameEngine {
     ].join("\n");
   }
 
+  private renderSpells(): string {
+    const def = getClass(this.state.player.class);
+    if (def.abilities.length === 0) {
+      return `${this.state.player.class}s don't cast spells. Rely on your weapon and your wits (try: attack <target>).`;
+    }
+    const lines = def.abilities.map(
+      (a) => `  ${a.name} — ${a.manaCost} MP — ${a.description} (cast ${a.name.toLowerCase()})`
+    );
+    return [`Known spells/abilities (you have ${this.state.player.mana}/${this.state.player.maxMana} MP):`, ...lines].join(
+      "\n"
+    );
+  }
+
   private renderHelp(): string {
     return [
       "Common commands:",
       "  look, look <direction>, inspect <thing>, search",
       "  go <direction> (or just: north / n / south / s / east / e / west / w / up / down)",
       "  take <item>, drop <item>, wear/equip <item>, inventory",
-      "  attack <monster>, cast <spell>, flee",
+      "  attack <monster>, attack <monster> with <weapon>, cast <spell>, spells, flee",
       "  drink <potion>, eat <food>, use <item>",
-      "  open/close/unlock/push/pull/read/pray/sit/dig <feature>",
+      "  open/close/unlock/push/pull/read/pray/sit/climb/dig <feature>",
       "  talk <npc>, ask <npc> about <topic>, buy <item>",
       "  stats, quests, map, journal, rest, save, hint",
     ].join("\n");
@@ -608,10 +636,20 @@ export class GameEngine {
     const itemLines = itemsHere.length
       ? `You see: ${itemsHere.map((id) => getItem(id)?.name ?? id).join(", ")}.`
       : "";
+    const monsterLines = (loc.monsterIds ?? [])
+      .map((id) => {
+        const defeated = this.state.world.defeatedMonsters.has(`${loc.id}:${id}`);
+        const monster = getMonster(id);
+        if (!monster) return null;
+        if (defeated) return `The remains of a ${monster.name} lie here.`;
+        if (this.encounter?.monsterId === id) return null; // already announced by the encounter line
+        return `A ${monster.name} is here.`;
+      })
+      .filter((l): l is string => Boolean(l));
     const exits = world.visibleExits(loc, this.state).map((e) => e.direction);
     const exitLine = exits.length ? `Exits: ${exits.join(", ")}.` : "There are no obvious exits.";
     const darkWarning = loc.isDark && !this.state.player.torchLit ? "It's too dark to see much. (try: light torch)" : "";
 
-    return [heading, body, itemLines, darkWarning, exitLine].filter(Boolean).join("\n");
+    return [heading, body, itemLines, ...monsterLines, darkWarning, exitLine].filter(Boolean).join("\n");
   }
 }

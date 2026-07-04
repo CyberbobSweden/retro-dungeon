@@ -43,8 +43,18 @@ export const CAVE_LOCATIONS: Location[] = [
     longDescription:
       "The cavern opens into a vast chamber. A lake fills most of it, so still it " +
       "looks solid until a drip breaks the surface somewhere out of sight. Faint " +
-      "phosphorescent fungus clings to the far wall, just enough to see by.",
-    exits: [{ direction: "west", to: "cave_tunnel" }],
+      "phosphorescent fungus clings to the far wall, just enough to see by. An old " +
+      "wooden ladder is bolted to the rock nearby, leading up into a crack in the " +
+      "ceiling.",
+    exits: [
+      { direction: "west", to: "cave_tunnel" },
+      {
+        direction: "up",
+        to: "lake_ledge",
+        hidden: true,
+        description: "A narrow ledge, reachable by the old ladder.",
+      },
+    ],
     itemIds: ["silver_ring"],
     features: [
       {
@@ -55,10 +65,40 @@ export const CAVE_LOCATIONS: Location[] = [
           listen: { text: "Water drips somewhere far across the lake. Nothing else moves." },
         },
       },
+      {
+        id: "old_ladder",
+        name: "ladder",
+        synonyms: ["wooden ladder", "old ladder"],
+        description: "Weathered but solid, bolted into the rock face.",
+        interactions: {
+          climb: {
+            text: "You climb the old ladder up through the crack in the ceiling, onto a narrow ledge.",
+            revealsExit: "up",
+            setsFlag: "climbed_lake_ladder",
+          },
+        },
+      },
     ],
     monsterIds: ["giant_spider"],
     isDark: true,
     tags: ["cave", "underground", "water"],
     mapPosition: { x: 3, y: -3, z: -1 },
+  },
+  {
+    id: "lake_ledge",
+    name: "Lake Ledge",
+    region: "mine",
+    shortDescription: "A narrow shelf of rock above the underground lake.",
+    longDescription:
+      "The ledge is barely wide enough to stand on. From up here you can see the " +
+      "full span of the lake below, and a second passage leading further into the " +
+      "rock, away from the water.",
+    exits: [
+      { direction: "down", to: "underground_lake" },
+      { direction: "east", to: "ossuary", oneWay: true },
+    ],
+    isDark: true,
+    tags: ["cave", "underground", "shortcut"],
+    mapPosition: { x: 3, y: -4, z: -1 },
   },
 ];
