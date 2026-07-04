@@ -318,6 +318,8 @@ export interface Quest {
   rewardGold?: number;
   rewardItemIds?: string[];
   giverNpcId?: string;
+  /** Starts tracking automatically at game creation, no NPC required. */
+  autoStart?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -362,6 +364,8 @@ export interface WorldRuntimeState {
   flags: Set<string>;
   /** Discovered hidden exits, keyed by "locationId:direction". */
   revealedExits: Set<string>;
+  /** Item ids banked in the Village Square trophy case (Zork-style scoring). */
+  trophyCase: string[];
 }
 
 export type Difficulty = "easy" | "normal" | "hard";
@@ -376,6 +380,7 @@ export interface GameState {
   unlockedCommands: Set<string>; // "map", "journal", etc. gated by items
   seed: string;
   difficulty: Difficulty;
+  score: number;
 }
 
 export interface LogEntry {
@@ -399,6 +404,7 @@ export interface SaveFileV1 {
     defeatedMonsters: string[];
     flags: string[];
     revealedExits: string[];
+    trophyCase: string[];
   };
   quests: Record<string, QuestStatus>;
   questProgress: Record<string, string>;
@@ -406,6 +412,7 @@ export interface SaveFileV1 {
   unlockedCommands: string[];
   seed: string;
   difficulty: Difficulty;
+  score: number;
 }
 
 // ---------------------------------------------------------------------------

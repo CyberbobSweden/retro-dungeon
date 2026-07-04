@@ -241,6 +241,7 @@ export const ITEMS: Record<string, Item> = {
   gold_coin_pile: {
     id: "gold_coin_pile",
     name: "Pile of Gold Coins",
+    synonyms: ["gold", "coins", "gold coins", "pile of gold"],
     type: "treasure",
     rarity: "common",
     description: "Coins stamped with the sigil of a kingdom long fallen.",
@@ -251,6 +252,7 @@ export const ITEMS: Record<string, Item> = {
   silver_ring: {
     id: "silver_ring",
     name: "Tarnished Silver Ring",
+    synonyms: ["ring"],
     type: "jewelry",
     rarity: "uncommon",
     description: "Etched with runes too worn to read.",
@@ -281,6 +283,7 @@ export const ITEMS: Record<string, Item> = {
   rune_of_warding: {
     id: "rune_of_warding",
     name: "Rune of Warding",
+    synonyms: ["rune"],
     type: "rune",
     rarity: "epic",
     description: "A carved stone that hums when danger is near.",
@@ -290,6 +293,7 @@ export const ITEMS: Record<string, Item> = {
   sunken_crown: {
     id: "sunken_crown",
     name: "Crown of the Sunken King",
+    synonyms: ["crown"],
     type: "treasure",
     rarity: "artifact",
     description:

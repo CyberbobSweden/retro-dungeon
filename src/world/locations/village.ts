@@ -10,7 +10,9 @@ export const VILLAGE_LOCATIONS: Location[] = [
       "A cracked cobblestone square, ringed by crooked timber houses. A well sits at " +
       "its center, and somewhere a shutter bangs against its frame in the wind. This " +
       "is the only place in the world that has ever felt entirely safe. A blank " +
-      "sheet of old paper has blown up against the well and caught there.",
+      "sheet of old paper has blown up against the well and caught there. Near the " +
+      "well, someone long ago bolted an old glass-fronted trophy case to the " +
+      "cobblestones — empty, for now.",
     exits: [
       { direction: "north", to: "old_well" },
       { direction: "east", to: "blacksmith" },
@@ -19,6 +21,16 @@ export const VILLAGE_LOCATIONS: Location[] = [
     ],
     itemIds: ["old_paper"],
     npcIds: ["elder_maren"],
+    features: [
+      {
+        id: "trophy_case",
+        name: "trophy case",
+        synonyms: ["case"],
+        description:
+          "A sturdy glass-fronted case, bolted down. It seems built to hold " +
+          "something worth showing off. (try: put <item> in case)",
+      },
+    ],
     ambientSounds: ["distant chatter", "a dog barking", "wind"],
     isSafe: true,
     tags: ["village", "start"],

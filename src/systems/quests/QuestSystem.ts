@@ -29,6 +29,7 @@ export class QuestSystem {
         messages.push(`Quest complete: ${quest.title}`);
         const xpLines = characterSystem.grantXp(state, quest.rewardXp);
         messages.push(...xpLines);
+        state.score += Math.round(quest.rewardXp / 2);
         if (quest.rewardGold) {
           state.player.gold += quest.rewardGold;
           messages.push(`You receive ${quest.rewardGold} gold.`);

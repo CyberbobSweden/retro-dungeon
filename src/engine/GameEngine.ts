@@ -18,6 +18,15 @@ import { mapSystem } from "@/systems/map/MapSystem";
 import { saveSystem } from "@/systems/save/SaveSystem";
 import { getCompletion } from "@/systems/progress/ProgressSystem";
 import { DEATH_BANNER, VICTORY_BANNER } from "@/data/asciiArt";
+import { getRank, nextRankThreshold } from "@/data/ranks";
+
+const WAYSTONE_FLAGS = [
+  "activated_ice_waystone",
+  "activated_fire_waystone",
+  "activated_sand_waystone",
+  "activated_peak_waystone",
+  "activated_marsh_waystone",
+];
 
 /** Runtime combat encounter tracked outside GameState (not persisted mid-fight). */
 interface ActiveEncounter {
@@ -86,6 +95,8 @@ export class GameEngine {
         return this.handleTake(cmd);
       case "drop":
         return this.handleDrop(cmd);
+      case "put":
+        return this.handlePut(cmd);
       case "wear":
       case "equip":
         return this.handleEquip(cmd);
@@ -128,6 +139,24 @@ export class GameEngine {
         return { text: questSystem.listDescription(this.state), turnConsumed: false };
       case "completion":
         return { text: this.renderCompletion(), turnConsumed: false };
+      case "score":
+        return { text: this.renderScore(), turnConsumed: false };
+      case "xyzzy":
+        return { text: this.renderXyzzy(), turnConsumed: true };
+      case "plugh":
+        return this.handlePlugh();
+      case "swear":
+        return { text: this.renderSwear(), turnConsumed: true };
+      case "sing":
+        return { text: this.renderSing(), turnConsumed: true };
+      case "dance":
+        return { text: this.renderDance(), turnConsumed: true };
+      case "count":
+        return { text: this.renderCount(cmd), turnConsumed: true };
+      case "zork":
+        return { text: this.renderZork(), turnConsumed: true };
+      case "yell":
+        return this.handleYell();
       case "journal":
         return this.handleJournal();
       case "map":
@@ -195,9 +224,15 @@ export class GameEngine {
 
   private handleInspect(cmd: ParsedCommand): CommandResult {
     if (!cmd.directObject) return { text: "Inspect what?", turnConsumed: false };
+    if (["me", "myself", "self"].includes(cmd.directObject.toLowerCase())) {
+      return { text: this.renderSelfInspection(), turnConsumed: false };
+    }
     const loc = this.currentLocation();
     const feature = world.findFeature(loc, cmd.directObject);
     if (feature) {
+      if (feature.id === "trophy_case") {
+        return { text: this.renderTrophyCase(), turnConsumed: false };
+      }
       return { text: feature.onInspect ?? feature.description, turnConsumed: false };
     }
     const item = findItemByName(cmd.directObject);
@@ -205,6 +240,20 @@ export class GameEngine {
       return { text: item.description, turnConsumed: false };
     }
     return { text: "You see nothing special about that.", turnConsumed: false };
+  }
+
+  private renderSelfInspection(): string {
+    const p = this.state.player;
+    const wounded = p.health < p.maxHealth * 0.4 ? " You look worse for wear." : "";
+    return `You are ${p.name}, a level ${p.level} ${p.class}. As handsome/formidable as ever.${wounded}`;
+  }
+
+  private renderTrophyCase(): string {
+    if (this.state.world.trophyCase.length === 0) {
+      return "An empty glass-fronted trophy case. (try: put <item> in case)";
+    }
+    const names = this.state.world.trophyCase.map((id) => getItem(id)?.name ?? id);
+    return `The trophy case holds: ${names.join(", ")}.`;
   }
 
   private handleSearch(cmd: ParsedCommand): CommandResult {
@@ -242,6 +291,9 @@ export class GameEngine {
 
   private handleTake(cmd: ParsedCommand): CommandResult {
     if (!cmd.directObject) return { text: "Take what?", turnConsumed: false };
+    if (["me", "myself", "self"].includes(cmd.directObject.toLowerCase())) {
+      return { text: "You take yourself rather too seriously. Nothing else changes.", turnConsumed: false };
+    }
     const item = findItemByName(cmd.directObject);
     if (!item || !this.locationHasItem(item.id)) {
       return { text: "You don't see that here.", turnConsumed: false };
@@ -262,6 +314,40 @@ export class GameEngine {
       };
     }
     return { text: [`You take the ${item.name}.`, unlockMsg].filter(Boolean).join(" "), turnConsumed: true };
+  }
+
+  /** "put sword in case" / "place crown in trophy case" — Zork-style scoring. */
+  private handlePut(cmd: ParsedCommand): CommandResult {
+    if (!cmd.directObject) return { text: "Put what where?", turnConsumed: false };
+    const destination = cmd.indirectObject ?? "";
+    if (!destination.includes("case")) {
+      return { text: "Put it where, exactly? (try: put <item> in case)", turnConsumed: false };
+    }
+    if (this.state.player.currentLocationId !== "village_square") {
+      return { text: "There's no trophy case here. The only one you've found is in the Village Square.", turnConsumed: false };
+    }
+    const item = inventorySystem.findInInventory(this.state, cmd.directObject);
+    if (!item) return { text: "You don't have that.", turnConsumed: false };
+
+    const isTrophyWorthy =
+      item.type === "treasure" ||
+      item.type === "jewelry" ||
+      item.type === "rune" ||
+      item.rarity === "legendary" ||
+      item.rarity === "epic" ||
+      item.rarity === "artifact";
+    if (!isTrophyWorthy) {
+      return { text: `The ${item.name} doesn't seem like trophy case material.`, turnConsumed: false };
+    }
+
+    inventorySystem.removeItem(this.state, item.id);
+    this.state.world.trophyCase.push(item.id);
+    const points = { common: 20, uncommon: 40, rare: 80, epic: 150, legendary: 250, artifact: 500 }[item.rarity] ?? 20;
+    this.state.score += points;
+    return {
+      text: `You place the ${item.name} in the trophy case. (+${points} points) Score: ${this.state.score}`,
+      turnConsumed: true,
+    };
   }
 
   private handleDrop(cmd: ParsedCommand): CommandResult {
@@ -357,6 +443,10 @@ export class GameEngine {
     if (interaction.setsFlag) {
       this.state.world.flags.add(interaction.setsFlag);
       lines.push(...questSystem.onFlagSet(this.state, interaction.setsFlag));
+      if (WAYSTONE_FLAGS.includes(interaction.setsFlag) && WAYSTONE_FLAGS.every((f) => this.state.world.flags.has(f))) {
+        this.state.world.flags.add("all_waystones_activated");
+        lines.push(...questSystem.onFlagSet(this.state, "all_waystones_activated"));
+      }
     }
     return { text: lines.join(" "), turnConsumed: true };
   }
@@ -504,7 +594,12 @@ export class GameEngine {
     const outcome = combatSystem.resolvePlayerAttack(this.state, monster, this.encounter.currentHealth, abilityDamage);
     if (equipMsg) outcome.lines.unshift(equipMsg);
     if (outcome.monsterDefeated) {
-      this.state.world.defeatedMonsters.add(`${loc.id}:${this.encounter.monsterId}`);
+      const monsterId = this.encounter.monsterId;
+      this.state.world.defeatedMonsters.add(`${loc.id}:${monsterId}`);
+      const defeatFlag = `defeated_${monsterId}_at_${loc.id}`;
+      this.state.world.flags.add(defeatFlag);
+      this.state.score += Math.round(monster.xpReward / 4);
+      outcome.lines.push(...questSystem.onFlagSet(this.state, defeatFlag));
       this.encounter = null;
     } else {
       this.encounter.currentHealth = Math.max(0, this.encounter.currentHealth - outcome.damageDealt);
@@ -578,6 +673,86 @@ export class GameEngine {
     ].join("\n");
   }
 
+  private renderScore(): string {
+    const rank = getRank(this.state.score);
+    const next = nextRankThreshold(this.state.score);
+    const lines = [`Score: ${this.state.score} points. Rank: ${rank}.`];
+    if (next !== null) lines.push(`(${next - this.state.score} points to the next rank.)`);
+    if (this.state.world.trophyCase.length) {
+      const names = this.state.world.trophyCase.map((id) => getItem(id)?.name ?? id);
+      lines.push(`Trophy case: ${names.join(", ")}.`);
+    } else {
+      lines.push(`Trophy case: empty. (Bring treasures to the Village Square: put <item> in case)`);
+    }
+    return lines.join("\n");
+  }
+
+  private renderXyzzy(): string {
+    return "A hollow voice says, \"Nice try.\" Nothing happens. (Some traditions are worth keeping.)";
+  }
+
+  /** A magic word older than this game — Colossal Cave Adventure's teleport-home easter egg. */
+  private handlePlugh(): CommandResult {
+    if (this.state.player.currentLocationId === "village_square") {
+      return { text: "Nothing happens. (You're already home.)", turnConsumed: false };
+    }
+    this.state.player.currentLocationId = "village_square";
+    mapSystem.revealNeighbors(this.state, "village_square");
+    return {
+      text: [
+        "A word older than this world moves your feet before your mind catches up.",
+        "",
+        this.describeLocation(true),
+      ].join("\n"),
+      turnConsumed: true,
+    };
+  }
+
+  private renderSwear(): string {
+    const lines = [
+      "You swear an oath that would make a sailor blush. Nothing happens, but you feel a little better.",
+      "You curse the darkness, the damp, and whoever built stairs this steep. It doesn't help.",
+      "You let out a word you learned from Old Tomas at the tavern. Somewhere, distantly, a goblin agrees.",
+    ];
+    return lines[Math.floor(Math.random() * lines.length)];
+  }
+
+  private renderSing(): string {
+    if (this.state.player.class === "Bard") {
+      return "You sing. For a moment, even the dark seems to be listening. (You feel faintly more inspired, if nothing else.)";
+    }
+    return "You attempt a tune. It goes about as well as you'd expect. Something in the dark politely does not comment.";
+  }
+
+  private renderDance(): string {
+    return "You dance, alone, in the dark, several hundred feet underground. No one is impressed. You feel great, though.";
+  }
+
+  private renderCount(cmd: ParsedCommand): string {
+    const noun = cmd.directObject ?? "things";
+    const n = 10000 + Math.floor(Math.random() * 90000);
+    return `You count. There are ${n.toLocaleString()} ${noun} here, which is of no value at all.`;
+  }
+
+  private renderZork(): string {
+    return "That's a different game, in a different dungeon, in a different empire. This one's yours.";
+  }
+
+  private handleYell(): CommandResult {
+    const loc = this.currentLocation();
+    if (!this.encounter && loc.monsterIds?.some((id) => !this.state.world.defeatedMonsters.has(`${loc.id}:${id}`))) {
+      const encounterText = this.maybeStartEncounter();
+      if (encounterText) {
+        return {
+          text: ["You yell, loud enough to wake the dead — or worse, whatever's still alive down here.", "", encounterText].join("\n"),
+          turnConsumed: true,
+          kind: "combat",
+        };
+      }
+    }
+    return { text: "You yell. Your own echo is the only thing that answers.", turnConsumed: true };
+  }
+
   private renderCompletion(): string {
     const c = getCompletion(this.state);
     return [
@@ -606,12 +781,12 @@ export class GameEngine {
       "Common commands:",
       "  look, look <direction>, inspect <thing>, search",
       "  go <direction> (or just: north / n / south / s / east / e / west / w / up / down)",
-      "  take <item>, drop <item>, wear/equip <item>, inventory",
+      "  take <item>, drop <item>, put <item> in case, wear/equip <item>, inventory",
       "  attack <monster>, attack <monster> with <weapon>, cast <spell>, spells, flee",
       "  drink <potion>, eat <food>, use <item>",
       "  open/close/unlock/push/pull/read/pray/sit/climb/dig <feature>",
       "  talk <npc>, ask <npc> about <topic>, buy <item>",
-      "  stats, quests, map, journal, rest, save, hint, completion",
+      "  stats, quests, map, journal, rest, save, hint, completion, score",
     ].join("\n");
   }
 
@@ -619,7 +794,7 @@ export class GameEngine {
     if (!this.state.unlockedCommands.has("map") && this.state.world.flags.has("learned_map_lore")) {
       return "Hint: paper and something to write with might let you draw what you've explored.";
     }
-    return "Hint: try `look`, `search`, or talk to people in the village — they know more than they say at first.";
+    return "Hint: try `look`, `search`, or talk to people in the village — they know more than they say at first. (Also: some old adventuring traditions still work here, if you remember any magic words.)";
   }
 
   // ---------------------------------------------------------------------

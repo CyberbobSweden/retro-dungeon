@@ -118,7 +118,11 @@ export default function App() {
       <div className="mx-auto flex h-full max-w-6xl flex-col gap-3">
         <StatusBar state={gameState} />
         <div className="grid flex-1 grid-cols-1 gap-3 overflow-hidden md:grid-cols-[1fr_320px]">
-          <Terminal log={gameState.log} onSubmit={handleCommand} />
+          <Terminal
+            log={gameState.log}
+            onSubmit={handleCommand}
+            currentRegion={world.getLocation(gameState.player.currentLocationId)?.region ?? "village"}
+          />
           <Sidebar state={gameState} onCommand={handleCommand} onLoadState={handleLoadState} />
         </div>
       </div>

@@ -23,6 +23,7 @@ export class SaveSystem {
         defeatedMonsters: [...state.world.defeatedMonsters],
         flags: [...state.world.flags],
         revealedExits: [...state.world.revealedExits],
+        trophyCase: [...state.world.trophyCase],
       },
       quests: state.quests,
       questProgress: state.questProgress,
@@ -30,6 +31,7 @@ export class SaveSystem {
       unlockedCommands: [...state.unlockedCommands],
       seed: state.seed,
       difficulty: state.difficulty,
+      score: state.score,
     };
   }
 
@@ -43,6 +45,7 @@ export class SaveSystem {
         defeatedMonsters: new Set(save.world.defeatedMonsters),
         flags: new Set(save.world.flags),
         revealedExits: new Set(save.world.revealedExits),
+        trophyCase: save.world.trophyCase ?? [],
       },
       quests: save.quests,
       questProgress: save.questProgress,
@@ -51,6 +54,7 @@ export class SaveSystem {
       unlockedCommands: new Set(save.unlockedCommands),
       seed: save.seed,
       difficulty: save.difficulty ?? "normal",
+      score: save.score ?? 0,
     };
   }
 

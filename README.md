@@ -43,6 +43,31 @@ npm run typecheck # strict TS check, no emit
   outcome of a single playthrough.
 - **ASCII banners for the big moments** (`src/data/asciiArt.ts`): the
   title screen, dying, and the current story's climax.
+- **9 quests** (up from 2): the main well quest plus 8 self-tracking side
+  quests tied to specific bosses (bandits, frost giant, dragon, sandworm,
+  castle intruder, the Lich King) and the waystone network — see
+  `src/data/quests.ts`. Side quests use `autoStart: true` and track
+  themselves via a `defeated_<monsterId>_at_<locationId>` flag set
+  automatically on every kill, no NPC hand-off required.
+- **Zork-style scoring**: a trophy case at the Village Square
+  (`put <item> in case`) banks treasure-tier items for points, plus a
+  `score` command with rank titles (Vagrant → ... → Legend of the Deep).
+  Also a small set of "for your amusement" easter eggs in the Colossal
+  Cave/Zork tradition: `xyzzy`, `plugh` (an old teleport-home word),
+  `swear`, `sing`, `dance`, `count leaves`, `zork`, `yell`, `examine
+  myself`, `take myself` — see `docs/HINTS.md` for the full list.
+- **Procedural ambient audio** (`src/systems/audio/AmbientAudioSystem.ts`):
+  a low drone + filtered noise per region, generated entirely with the
+  Web Audio API (no sound files to host). It auto-ducks to near-silent
+  while the mic is actively listening for a voice command, since sound
+  and voice control were an explicit "don't let one break the other" ask.
+- **Voice control that actually loops.** The original hands-free
+  implementation died silently whenever `SpeechRecognition` ended from a
+  silence timeout (very common on mobile) instead of a real result — it
+  only restarted itself after speaking a response. Fixed to distinguish
+  "got a result" from "timed out with nothing said" and restart itself
+  in the latter case too, unless the mic was explicitly turned off or
+  permission was denied.
 - **RPG systems**: seven stats, ten classes, leveling, equipment,
   quests with multi-stage tracking, a loot/rarity system, and a combat
   loop simple enough to stay legible in a text log.
@@ -158,11 +183,11 @@ encounters" without hand-authoring 300 stat blocks.
 
 Movement: `go <dir>` / bare direction / `n,s,e,w,u,d`, `climb`, `enter`, `leave`
 Senses: `look`, `look <direction>`, `inspect <thing>`, `search`, `listen`, `smell`, `taste`
-Items: `take`, `drop`, `wear`/`equip`, `remove`/`unequip`, `inventory`, `use`, `drink`, `eat`
+Items: `take`, `drop`, `put <item> in case`, `wear`/`equip`, `remove`/`unequip`, `inventory`, `use`, `drink`, `eat`
 Combat: `attack` (`kill`/`fight`/`hit`/`stab` all work), `attack <target> with <item>`, `cast <spell>`, `spells`, `flee`
 World interaction: `open`, `close`, `unlock`, `push`, `pull`, `read`, `pray`, `sit`, `climb`, `dig`
 Social: `talk <npc>`, `ask <npc> about <topic>`, `buy <item>`
-Meta: `stats`, `quests`, `map`, `journal`, `rest`, `save`, `help`, `hint`, `completion`
+Meta: `stats`, `quests`, `map`, `journal`, `rest`, `save`, `help`, `hint`, `completion`, `score`, `xyzzy`
 
 ## Roadmap (from the brief, not yet built)
 

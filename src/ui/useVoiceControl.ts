@@ -31,10 +31,17 @@ export function useVoiceControl(onCommand: (text: string) => void): VoiceControl
   const [handsFree, setHandsFree] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const handsFreeRef = useRef(false);
+  const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     handsFreeRef.current = handsFree;
   }, [handsFree]);
+
+  useEffect(() => {
+    return () => {
+      if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+    };
+  }, []);
 
   const getRecognition = useCallback((): SpeechRecognitionLike | null => {
     if (!supported) return null;
@@ -49,21 +56,57 @@ export function useVoiceControl(onCommand: (text: string) => void): VoiceControl
   }, [supported]);
 
   const listenOnce = useCallback(() => {
-    if (!supported || listening) return;
+    if (!supported) return;
+    if (restartTimerRef.current) {
+      clearTimeout(restartTimerRef.current);
+      restartTimerRef.current = null;
+    }
     const recognition = getRecognition();
     if (!recognition) return;
     recognitionRef.current = recognition;
 
+    // Tracks whether this particular listening session produced a result,
+    // so onend can tell "the user said something" apart from "silence /
+    // no-speech timeout" — mobile browsers end a recognition session after
+    // a few seconds of silence even in hands-free mode, and without this
+    // the mic would just go dead until the button was pressed again.
+    let gotResult = false;
+
     recognition.onresult = (event) => {
       const transcript = event.results[event.results.length - 1]?.[0]?.transcript;
-      if (transcript?.trim()) onCommand(transcript.trim());
+      if (transcript?.trim()) {
+        gotResult = true;
+        onCommand(transcript.trim());
+      }
     };
-    recognition.onerror = () => setListening(false);
-    recognition.onend = () => setListening(false);
+
+    recognition.onerror = (event) => {
+      setListening(false);
+      const fatal = event.error === "not-allowed" || event.error === "service-not-allowed" || event.error === "aborted";
+      if (!fatal && handsFreeRef.current) {
+        restartTimerRef.current = setTimeout(() => listenOnce(), 500);
+      }
+    };
+
+    recognition.onend = () => {
+      setListening(false);
+      // No result this session (silence/timeout) but still in hands-free
+      // mode: keep the loop alive by listening again after a short pause.
+      // If a result DID come in, the caller's own flow (submit -> speak
+      // the response -> listen again) handles the next restart instead,
+      // so we don't double-restart on top of that.
+      if (!gotResult && handsFreeRef.current) {
+        restartTimerRef.current = setTimeout(() => listenOnce(), 500);
+      }
+    };
 
     setListening(true);
-    recognition.start();
-  }, [supported, listening, getRecognition, onCommand]);
+    try {
+      recognition.start();
+    } catch {
+      setListening(false);
+    }
+  }, [supported, getRecognition, onCommand]);
 
   const stopSpeaking = useCallback(() => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -99,7 +142,12 @@ export function useVoiceControl(onCommand: (text: string) => void): VoiceControl
   const toggleHandsFree = useCallback(() => {
     setHandsFree((prev) => {
       const next = !prev;
+      handsFreeRef.current = next;
       if (!next) {
+        if (restartTimerRef.current) {
+          clearTimeout(restartTimerRef.current);
+          restartTimerRef.current = null;
+        }
         stopSpeaking();
         recognitionRef.current?.abort();
         setListening(false);

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import type { LogEntry } from "@/types";
+import type { LogEntry, Region } from "@/types";
 import { useVoiceControl } from "@/ui/useVoiceControl";
+import { ambientAudio } from "@/systems/audio/AmbientAudioSystem";
 
 interface Props {
   log: LogEntry[];
   onSubmit: (input: string) => void;
+  currentRegion: Region;
 }
 
 const KIND_COLOR: Record<LogEntry["kind"], string> = {
@@ -15,10 +17,11 @@ const KIND_COLOR: Record<LogEntry["kind"], string> = {
   dialogue: "text-crt-green",
 };
 
-export function Terminal({ log, onSubmit }: Props) {
+export function Terminal({ log, onSubmit, currentRegion }: Props) {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState<number | null>(null);
+  const [soundOn, setSoundOn] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const inputRowRef = useRef<HTMLDivElement>(null);
@@ -34,6 +37,19 @@ export function Terminal({ log, onSubmit }: Props) {
   }
 
   const voice = useVoiceControl((transcript) => runCommand(transcript));
+
+  useEffect(() => {
+    if (voice.listening) ambientAudio.duck();
+    else ambientAudio.unduck();
+  }, [voice.listening]);
+
+  useEffect(() => {
+    ambientAudio.setVolume(soundOn ? 0.35 : 0);
+  }, [soundOn]);
+
+  useEffect(() => {
+    if (soundOn) ambientAudio.setRegion(currentRegion);
+  }, [soundOn, currentRegion]);
 
   // Hands-free loop: whenever a new response lands while hands-free mode
   // is on, read it aloud, then start listening again automatically.
@@ -105,33 +121,47 @@ export function Terminal({ log, onSubmit }: Props) {
           </pre>
         ))}
       </div>
-      {voice.supported && (
-        <div className="flex items-center gap-2 border-t border-crt-amberDim/40 px-4 py-2 text-[10px] uppercase tracking-widest">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              voice.listenOnce();
-            }}
-            disabled={voice.listening || voice.handsFree}
-            className={`border px-2 py-1 font-mono ${
-              voice.listening ? "border-crt-red text-crt-red" : "border-crt-amberDim/50 text-crt-amberDim hover:text-crt-amber"
-            } disabled:opacity-40`}
-          >
-            {voice.listening ? "● Listening…" : "🎤 Voice"}
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              voice.toggleHandsFree();
-            }}
-            className={`border px-2 py-1 font-mono ${
-              voice.handsFree ? "border-crt-green text-crt-green" : "border-crt-amberDim/50 text-crt-amberDim hover:text-crt-amber"
-            }`}
-          >
-            {voice.handsFree ? "🔊 Hands-free ON" : "Hands-free (driving mode)"}
-          </button>
-        </div>
-      )}
+      <div className="flex items-center gap-2 border-t border-crt-amberDim/40 px-4 py-2 text-[10px] uppercase tracking-widest">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!ambientAudio.isEnabled) ambientAudio.init();
+            setSoundOn((prev) => !prev);
+          }}
+          className={`border px-2 py-1 font-mono ${
+            soundOn ? "border-crt-green text-crt-green" : "border-crt-amberDim/50 text-crt-amberDim hover:text-crt-amber"
+          }`}
+        >
+          {soundOn ? "🔊 Sound ON" : "🔈 Sound OFF"}
+        </button>
+        {voice.supported && (
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                voice.listenOnce();
+              }}
+              disabled={voice.listening || voice.handsFree}
+              className={`border px-2 py-1 font-mono ${
+                voice.listening ? "border-crt-red text-crt-red" : "border-crt-amberDim/50 text-crt-amberDim hover:text-crt-amber"
+              } disabled:opacity-40`}
+            >
+              {voice.listening ? "● Listening…" : "🎤 Voice"}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                voice.toggleHandsFree();
+              }}
+              className={`border px-2 py-1 font-mono ${
+                voice.handsFree ? "border-crt-green text-crt-green" : "border-crt-amberDim/50 text-crt-amberDim hover:text-crt-amber"
+              }`}
+            >
+              {voice.handsFree ? "🔊 Hands-free ON" : "Hands-free (driving mode)"}
+            </button>
+          </>
+        )}
+      </div>
       <div ref={inputRowRef} className="flex items-center gap-2 border-t border-crt-amberDim/40 px-4 py-3">
         <span className="text-crt-amber">{">"}</span>
         <input

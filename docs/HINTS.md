@@ -39,6 +39,19 @@ a full spoiler — stop reading as soon as you've got what you need.
 ### "Is there a way to skip ahead / shortcut the caves?"
 - **Spoiler:** yes — climbing the ladder at the Underground Lake leads to Lake Ledge, which has a one-way passage straight into the Ossuary (crypt region), skipping the dungeon entrance and crypt corridor entirely. You can't go back the way you came, though.
 
+### "What are all these quests I keep seeing start automatically?"
+Most side quests now track themselves automatically the moment you enter the world — you don't need to find an NPC to "accept" them, they just start recording progress in the background. Check `quests` any time to see what's active. There are 9 total: the main well quest (needs Elder Maren to start), and 8 self-tracking side quests tied to specific bosses and the waystone network.
+
+### "There's a trophy case in the Village Square. What goes in it?"
+1. Not everything — try something valuable-looking first.
+2. **Spoiler:** any item of type treasure/jewelry/rune, or rarity epic/legendary/artifact, can be banked with `put <item> in case`. Each one is worth points toward your `score` and rank (Vagrant → ... → Legend of the Deep) — this is the game's version of the classic "collect treasures, get points" adventure-game structure.
+
+### "What's `score` vs `completion`?"
+`completion` is about how much of the *world* you've seen (locations/quests/monsters). `score` is a points-and-rank system in the Zork tradition — kills, quest completions, and trophy case deposits all contribute. They're deliberately separate: you can finish the story without maxing either one.
+
+### "Are there any easter eggs? (No spoilers past this point if you want to find them yourself.)"
+Yes — a handful of "for your amusement" commands in the Colossal Cave/Zork tradition. Try: `xyzzy`, `plugh`, `swear`, `sing` (especially as a Bard), `dance`, `count leaves`, `zork`, `yell`, `examine myself`, and `take myself`. None of them are required for anything — they're just tradition.
+
 ### "I found a caved-in grave in the village graveyard."
 1. That's not decoration.
 2. **Spoiler:** `search disturbed grave` reveals a passage down into the Catacombs — a second, direct entrance to the crypt region that doesn't require going through the caves or dungeon at all.
