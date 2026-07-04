@@ -5,6 +5,7 @@ import { questSystem } from "@/systems/quests/QuestSystem";
 import { mapSystem } from "@/systems/map/MapSystem";
 import { getItem } from "@/entities/items";
 import { saveSystem } from "@/systems/save/SaveSystem";
+import { getCompletion } from "@/systems/progress/ProgressSystem";
 
 type Tab = "inventory" | "character" | "quests" | "map" | "save";
 
@@ -98,12 +99,13 @@ function InventoryPanel({ state, onCommand }: { state: GameState; onCommand: (cm
 function CharacterPanel({ state }: { state: GameState }) {
   const p = state.player;
   const s = p.stats;
+  const completion = getCompletion(state);
   return (
     <div className="space-y-3">
       <div>
         <div className="text-base">{p.name}</div>
         <div className="text-xs opacity-70">
-          Level {p.level} {p.class}
+          Level {p.level} {p.class} · {state.difficulty}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-1 text-xs">
@@ -116,6 +118,23 @@ function CharacterPanel({ state }: { state: GameState }) {
       </div>
       <div className="text-xs opacity-70">
         XP {p.xp} / {p.xpToNextLevel}
+      </div>
+      <div className="border-t border-crt-amberDim/20 pt-2">
+        <div className="mb-1 flex justify-between text-xs">
+          <span className="opacity-70">World completion</span>
+          <span>{completion.percent}%</span>
+        </div>
+        <div className="h-1.5 w-full border border-crt-amberDim/40 bg-crt-panel">
+          <div
+            className="h-full bg-crt-green"
+            style={{ width: `${completion.percent}%` }}
+          />
+        </div>
+        <div className="mt-2 space-y-0.5 text-[10px] opacity-60">
+          <div>Locations: {completion.locationsVisited}/{completion.totalLocations}</div>
+          <div>Quests: {completion.questsCompleted}/{completion.totalQuests}</div>
+          <div>Monsters defeated: {completion.monstersDefeated}/{completion.totalMonsters}</div>
+        </div>
       </div>
     </div>
   );
@@ -140,8 +159,18 @@ function MapPanel({ state }: { state: GameState }) {
 }
 
 function SavePanel({ state, onLoadState }: { state: GameState; onLoadState: (s: GameState) => void }) {
+  const completion = getCompletion(state);
   return (
     <div className="space-y-3 text-xs">
+      <div className="border border-crt-amberDim/40 p-3">
+        <div className="mb-1 flex justify-between">
+          <span className="opacity-70">World completion</span>
+          <span className="text-crt-green">{completion.percent}%</span>
+        </div>
+        <div className="h-1.5 w-full border border-crt-amberDim/40 bg-crt-panel">
+          <div className="h-full bg-crt-green" style={{ width: `${completion.percent}%` }} />
+        </div>
+      </div>
       <button
         className="w-full border border-crt-amberDim/50 px-3 py-2 hover:bg-crt-amberDim/20"
         onClick={() => saveSystem.saveToLocalStorage(state)}

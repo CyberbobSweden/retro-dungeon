@@ -364,6 +364,8 @@ export interface WorldRuntimeState {
   revealedExits: Set<string>;
 }
 
+export type Difficulty = "easy" | "normal" | "hard";
+
 export interface GameState {
   player: PlayerState;
   world: WorldRuntimeState;
@@ -373,6 +375,7 @@ export interface GameState {
   log: LogEntry[];
   unlockedCommands: Set<string>; // "map", "journal", etc. gated by items
   seed: string;
+  difficulty: Difficulty;
 }
 
 export interface LogEntry {
@@ -402,6 +405,7 @@ export interface SaveFileV1 {
   turnCount: number;
   unlockedCommands: string[];
   seed: string;
+  difficulty: Difficulty;
 }
 
 // ---------------------------------------------------------------------------

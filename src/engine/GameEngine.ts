@@ -7,7 +7,7 @@ import type {
 import { parser } from "@/parser/Parser";
 import { world } from "@/world/World";
 import { getItem, findItemByName } from "@/entities/items";
-import { getMonster } from "@/entities/monsters";
+import { getMonster, applyDifficulty } from "@/entities/monsters";
 import { getNpc } from "@/entities/npc";
 import { getClass } from "@/data/classes";
 import { inventorySystem } from "@/systems/inventory/InventorySystem";
@@ -16,6 +16,8 @@ import { combatSystem } from "@/systems/combat/CombatSystem";
 import { questSystem } from "@/systems/quests/QuestSystem";
 import { mapSystem } from "@/systems/map/MapSystem";
 import { saveSystem } from "@/systems/save/SaveSystem";
+import { getCompletion } from "@/systems/progress/ProgressSystem";
+import { DEATH_BANNER, VICTORY_BANNER } from "@/data/asciiArt";
 
 /** Runtime combat encounter tracked outside GameState (not persisted mid-fight). */
 interface ActiveEncounter {
@@ -124,6 +126,8 @@ export class GameEngine {
         return { text: this.renderSpells(), turnConsumed: false };
       case "quests":
         return { text: questSystem.listDescription(this.state), turnConsumed: false };
+      case "completion":
+        return { text: this.renderCompletion(), turnConsumed: false };
       case "journal":
         return this.handleJournal();
       case "map":
@@ -245,6 +249,18 @@ export class GameEngine {
     this.removeItemFromLocation(item.id);
     inventorySystem.addItem(this.state, item.id);
     const unlockMsg = this.maybeUnlockCommand(item.id);
+    if (item.id === "sunken_crown") {
+      return {
+        text: [
+          VICTORY_BANNER,
+          "",
+          "You lift the crown from the altar. Whatever wore it last has nothing left to say about it.",
+          "The weight of it is more than metal. You've found the heart of this current story — " +
+            "there's still a wide world left to explore, but you've closed the book on the Lich King.",
+        ].join("\n"),
+        turnConsumed: true,
+      };
+    }
     return { text: [`You take the ${item.name}.`, unlockMsg].filter(Boolean).join(" "), turnConsumed: true };
   }
 
@@ -405,7 +421,7 @@ export class GameEngine {
       (id) => !this.state.world.defeatedMonsters.has(`${loc.id}:${id}`)
     );
     if (!monsterId) return "";
-    const monster = getMonster(monsterId);
+    const monster = this.getLiveMonster(monsterId);
     if (!monster) return "";
     this.encounter = { monsterId, currentHealth: monster.health };
     const weapon = getItem(inventorySystem.equippedWeaponId(this.state) ?? "");
@@ -420,7 +436,7 @@ export class GameEngine {
 
   private describeEncounter(): CommandResult {
     if (!this.encounter) return { text: "There's nothing to fight.", turnConsumed: false };
-    const monster = getMonster(this.encounter.monsterId)!;
+    const monster = this.getLiveMonster(this.encounter.monsterId)!;
     return {
       text: `${monster.name}: ${this.encounter.currentHealth}/${monster.health} HP. ${monster.description}`,
       turnConsumed: false,
@@ -436,10 +452,16 @@ export class GameEngine {
       if (!monsterId || this.state.world.defeatedMonsters.has(`${loc.id}:${monsterId}`)) {
         return { text: "There's nothing here to attack.", turnConsumed: false };
       }
-      const monster = getMonster(monsterId)!;
+      const monster = this.getLiveMonster(monsterId)!;
       this.encounter = { monsterId, currentHealth: monster.health };
     }
     return this.handleCombatTurn({ ...cmd, verb: "attack" });
+  }
+
+  /** Fetches a monster's stats scaled to the player's chosen difficulty. */
+  private getLiveMonster(id: string) {
+    const monster = getMonster(id);
+    return monster ? applyDifficulty(monster, this.state.difficulty) : undefined;
   }
 
   /** "attack goblin with sword" / "kill goblin with dagger" — swap weapon on the fly if owned. */
@@ -464,7 +486,7 @@ export class GameEngine {
 
   private handleCombatTurn(cmd: ParsedCommand, abilityDamage?: [number, number]): CommandResult {
     if (!this.encounter) return { text: "There's nothing to fight.", turnConsumed: false };
-    const monster = getMonster(this.encounter.monsterId)!;
+    const monster = this.getLiveMonster(this.encounter.monsterId)!;
     const loc = this.currentLocation();
 
     if (cmd.verb === "flee") {
@@ -498,7 +520,11 @@ export class GameEngine {
     this.state.player.currentLocationId = "village_square";
     this.state.player.health = Math.max(1, Math.round(this.state.player.maxHealth * 0.3));
     this.encounter = null;
-    return "You wake in the village square, wounds bound by someone you don't recognize. You live to try again.";
+    return [
+      DEATH_BANNER,
+      "",
+      "You wake in the village square, wounds bound by someone you don't recognize. You live to try again.",
+    ].join("\n");
   }
 
   // ---------------------------------------------------------------------
@@ -552,6 +578,16 @@ export class GameEngine {
     ].join("\n");
   }
 
+  private renderCompletion(): string {
+    const c = getCompletion(this.state);
+    return [
+      `World completion: ${c.percent}%`,
+      `  Locations explored: ${c.locationsVisited}/${c.totalLocations}`,
+      `  Quests completed: ${c.questsCompleted}/${c.totalQuests}`,
+      `  Monsters defeated: ${c.monstersDefeated}/${c.totalMonsters}`,
+    ].join("\n");
+  }
+
   private renderSpells(): string {
     const def = getClass(this.state.player.class);
     if (def.abilities.length === 0) {
@@ -575,7 +611,7 @@ export class GameEngine {
       "  drink <potion>, eat <food>, use <item>",
       "  open/close/unlock/push/pull/read/pray/sit/climb/dig <feature>",
       "  talk <npc>, ask <npc> about <topic>, buy <item>",
-      "  stats, quests, map, journal, rest, save, hint",
+      "  stats, quests, map, journal, rest, save, hint, completion",
     ].join("\n");
   }
 

@@ -1,4 +1,4 @@
-import type { Monster, MonsterFamily } from "@/types";
+import type { Difficulty, Monster, MonsterFamily } from "@/types";
 
 /**
  * Hand-authored monsters. For the "300+ monsters" ambition from the design
@@ -406,4 +406,30 @@ function tryGenerateFromId(id: string): Monster | undefined {
 
 export function monstersByFamily(family: MonsterFamily): Monster[] {
   return Object.values(MONSTERS).filter((m) => m.family === family);
+}
+
+const DIFFICULTY_MULTIPLIERS: Record<Difficulty, { health: number; damage: number; xp: number }> = {
+  easy: { health: 0.7, damage: 0.7, xp: 1.25 },
+  normal: { health: 1, damage: 1, xp: 1 },
+  hard: { health: 1.35, damage: 1.3, xp: 1.2 },
+};
+
+/**
+ * Applies the player's chosen difficulty to a monster's combat stats.
+ * Chosen once at character creation, applied every fight — easy mode
+ * makes monsters noticeably softer and more generous with XP; hard mode
+ * does the opposite, with a bigger XP bump to compensate for the risk.
+ */
+export function applyDifficulty(monster: Monster, difficulty: Difficulty): Monster {
+  const mult = DIFFICULTY_MULTIPLIERS[difficulty];
+  if (mult.health === 1 && mult.damage === 1 && mult.xp === 1) return monster;
+  return {
+    ...monster,
+    health: Math.max(1, Math.round(monster.health * mult.health)),
+    damage: [
+      Math.max(1, Math.round(monster.damage[0] * mult.damage)),
+      Math.max(1, Math.round(monster.damage[1] * mult.damage)),
+    ],
+    xpReward: Math.round(monster.xpReward * mult.xp),
+  };
 }

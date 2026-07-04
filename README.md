@@ -1,4 +1,4 @@
-# Legends of the Deep
+# Dark Passages
 
 A modern retro text adventure — Zork/Colossal Cave/Infocom atmosphere, a
 forgiving natural-language parser, RPG progression, and a self-drawing
@@ -32,6 +32,17 @@ npm run typecheck # strict TS check, no emit
 - **Atmosphere over combat spam.** Room text, ambient sound lines, and a
   CRT-styled terminal UI carry the mood; the log tries to read like a
   transcript, not a stat sheet.
+- **Difficulty selection at character creation.** Easy/Normal/Hard scales
+  every monster's health, damage, and XP reward (`applyDifficulty()` in
+  `entities/monsters.ts`) — chosen once, applied to every fight.
+- **World completion tracking.** A weighted percentage (60% locations
+  explored, 20% quests completed, 20% unique monsters defeated) shown in
+  the sidebar's Character and Save tabs, and via the `completion` command.
+  It's meant to encourage exploration, not gate an achievement — several
+  locations are mutually-exclusive shortcuts, so 100% isn't the expected
+  outcome of a single playthrough.
+- **ASCII banners for the big moments** (`src/data/asciiArt.ts`): the
+  title screen, dying, and the current story's climax.
 - **RPG systems**: seven stats, ten classes, leveling, equipment,
   quests with multi-stage tracking, a loot/rarity system, and a combat
   loop simple enough to stay legible in a text log.
@@ -136,7 +147,7 @@ an architecture problem:
 
 ## Monster roster
 
-25 hand-authored monsters spanning goblinoids, undead, spiders, oozes,
+23 hand-authored monsters spanning goblinoids, undead, spiders, oozes,
 demons, dragons, elementals, and frontier-region specialists (frost
 giant, sandworm, roc, bog witch, magma hound), plus `generateVariant()`
 in `entities/monsters.ts`, which produces Weak/Elder/Ancient tiers of
@@ -151,7 +162,7 @@ Items: `take`, `drop`, `wear`/`equip`, `remove`/`unequip`, `inventory`, `use`, `
 Combat: `attack` (`kill`/`fight`/`hit`/`stab` all work), `attack <target> with <item>`, `cast <spell>`, `spells`, `flee`
 World interaction: `open`, `close`, `unlock`, `push`, `pull`, `read`, `pray`, `sit`, `climb`, `dig`
 Social: `talk <npc>`, `ask <npc> about <topic>`, `buy <item>`
-Meta: `stats`, `quests`, `map`, `journal`, `rest`, `save`, `help`, `hint`
+Meta: `stats`, `quests`, `map`, `journal`, `rest`, `save`, `help`, `hint`, `completion`
 
 ## Roadmap (from the brief, not yet built)
 

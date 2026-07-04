@@ -122,6 +122,8 @@ export const VERB_SYNONYMS: Record<string, string> = {
   spells: "spells",
   abilities: "spells",
   quests: "quests",
+  completion: "completion",
+  progress: "completion",
   journal: "journal",
   map: "map",
   save: "save",

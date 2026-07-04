@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import type { GameState, PlayerClass } from "@/types";
+import type { Difficulty, GameState, PlayerClass } from "@/types";
 import { createNewGame } from "@/engine/GameState";
 import { GameEngine } from "@/engine/GameEngine";
 import { world } from "@/world/World";
@@ -46,9 +46,10 @@ export default function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [engine, setEngine] = useState<GameEngine | null>(null);
 
-  const startGame = useCallback((name: string, playerClass: PlayerClass) => {
-    const state = createNewGame(name, playerClass);
-    state.log.push({ turn: 0, text: `Welcome, ${name} the ${playerClass}.`, kind: "system" });
+  const startGame = useCallback((name: string, playerClass: PlayerClass, difficulty: Difficulty) => {
+    const state = createNewGame(name, playerClass, difficulty);
+    const difficultyLabel = difficulty === "normal" ? "" : ` (${difficulty} difficulty)`;
+    state.log.push({ turn: 0, text: `Welcome, ${name} the ${playerClass}${difficultyLabel}.`, kind: "system" });
     state.log.push({ turn: 0, text: INTRO_TEXT, kind: "narration" });
     const loc = world.getLocation(state.player.currentLocationId);
     if (loc) {

@@ -29,6 +29,7 @@ export class SaveSystem {
       turnCount: state.turnCount,
       unlockedCommands: [...state.unlockedCommands],
       seed: state.seed,
+      difficulty: state.difficulty,
     };
   }
 
@@ -49,6 +50,7 @@ export class SaveSystem {
       log: [],
       unlockedCommands: new Set(save.unlockedCommands),
       seed: save.seed,
+      difficulty: save.difficulty ?? "normal",
     };
   }
 

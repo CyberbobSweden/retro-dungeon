@@ -1,8 +1,12 @@
-import type { GameState, PlayerClass } from "@/types";
+import type { Difficulty, GameState, PlayerClass } from "@/types";
 import { characterSystem } from "@/systems/character/CharacterSystem";
 import { STARTING_LOCATION_ID } from "@/world/locations";
 
-export function createNewGame(playerName: string, playerClass: PlayerClass): GameState {
+export function createNewGame(
+  playerName: string,
+  playerClass: PlayerClass,
+  difficulty: Difficulty = "normal"
+): GameState {
   const player = characterSystem.createNewPlayer(playerName, playerClass);
   player.currentLocationId = STARTING_LOCATION_ID;
 
@@ -22,5 +26,6 @@ export function createNewGame(playerName: string, playerClass: PlayerClass): Gam
     log: [],
     unlockedCommands: new Set(["look", "go", "inventory", "stats", "help", "quests"]),
     seed: `${playerName}-${Date.now()}`,
+    difficulty,
   };
 }

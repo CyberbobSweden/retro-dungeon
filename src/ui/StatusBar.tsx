@@ -21,7 +21,7 @@ export function StatusBar({ state }: Props) {
   return (
     <div className="border border-crt-amberDim/50 bg-crt-panel/60 px-4 py-3 font-mono text-crt-amber">
       <div className="flex items-baseline justify-between text-xs tracking-widest opacity-80">
-        <span>LEGENDS OF THE DEEP</span>
+        <span>DARK PASSAGES</span>
         <span>TURN {state.turnCount}</span>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
