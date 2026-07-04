@@ -14,6 +14,7 @@ export const FOREST_LOCATIONS: Location[] = [
       { direction: "north", to: "village_gate" },
       { direction: "south", to: "forest_clearing" },
       { direction: "east", to: "hunters_camp" },
+      { direction: "west", to: "river_crossing" },
     ],
     ambientSounds: ["birdsong", "rustling leaves", "creaking branches"],
     tags: ["forest", "surface"],
@@ -54,6 +55,7 @@ export const FOREST_LOCATIONS: Location[] = [
       { direction: "north", to: "forest_path" },
       { direction: "south", to: "dark_forest_edge" },
       { direction: "east", to: "cave_mouth" },
+      { direction: "west", to: "ancient_grove" },
     ],
     monsterIds: ["goblin_scout"],
     tags: ["forest", "surface"],
@@ -71,6 +73,7 @@ export const FOREST_LOCATIONS: Location[] = [
     exits: [
       { direction: "north", to: "forest_clearing" },
       { direction: "south", to: "ruined_shrine", hidden: true },
+      { direction: "west", to: "twisted_hollow" },
     ],
     features: [
       {
@@ -93,34 +96,130 @@ export const FOREST_LOCATIONS: Location[] = [
     mapPosition: { x: 0, y: -4, z: 0 },
   },
   {
-    id: "ruined_shrine",
-    name: "Ruined Shrine",
-    region: "ruins",
-    shortDescription: "Moss-covered stones, arranged with old intent.",
+    id: "river_crossing",
+    name: "River Crossing",
+    region: "forest",
+    shortDescription: "A shallow river, crossed by a rope bridge.",
     longDescription:
-      "Four standing stones lean toward a fifth, fallen one at the center. Faded " +
-      "carvings suggest a god no one living remembers the name of. The air here is " +
-      "very still.",
-    exits: [{ direction: "north", to: "dark_forest_edge" }],
+      "The river isn't deep, but it moves fast. A rope bridge, patched more than " +
+      "once, is the only dry way across. Somebody keeps it maintained — which means " +
+      "somebody uses it.",
+    exits: [
+      { direction: "east", to: "forest_path" },
+      { direction: "south", to: "bandit_camp" },
+      { direction: "west", to: "old_bridge" },
+    ],
+    ambientSounds: ["rushing water", "creaking rope"],
+    tags: ["forest", "surface", "water"],
+    mapPosition: { x: -1, y: -2, z: 0 },
+  },
+  {
+    id: "old_bridge",
+    name: "Old Stone Bridge",
+    region: "forest",
+    shortDescription: "A much older, sturdier bridge, further upstream.",
+    longDescription:
+      "Unlike the rope bridge downstream, this one is carved stone, arched and " +
+      "solid despite its age. Whoever built it built to last — which raises the " +
+      "question of who, and why, out here.",
+    exits: [{ direction: "east", to: "river_crossing" }],
+    itemIds: ["silver_ring"],
+    isSafe: true,
+    tags: ["forest", "surface", "landmark"],
+    mapPosition: { x: -2, y: -2, z: 0 },
+  },
+  {
+    id: "bandit_camp",
+    name: "Bandit Camp",
+    region: "forest",
+    shortDescription: "Tents around a firepit, and a lookout who spotted you first.",
+    longDescription:
+      "Whoever camps here didn't expect company from this direction. Crates of " +
+      "stolen goods are stacked haphazardly around a well-tended fire. The lookout " +
+      "is already reaching for a weapon.",
+    exits: [{ direction: "north", to: "river_crossing" }],
+    itemIds: ["chainmail", "gold_coin_pile"],
+    monsterIds: ["goblin_warband_leader"],
+    tags: ["forest", "surface"],
+    mapPosition: { x: -1, y: -3, z: 0 },
+  },
+  {
+    id: "ancient_grove",
+    name: "Ancient Grove",
+    region: "forest",
+    shortDescription: "One tree, far older than everything around it.",
+    longDescription:
+      "The other trees give this one space, as if by agreement. Its trunk is wide " +
+      "enough that six people couldn't circle it hand in hand. Carved into the bark, " +
+      "at head height, are names — dozens of them, going back further than the " +
+      "village's tally at the gate.",
+    exits: [{ direction: "east", to: "forest_clearing" }],
     features: [
       {
-        id: "fallen_stone",
-        name: "fallen stone",
-        synonyms: ["altar", "stone"],
-        description: "A cracked stone slab, half-sunk into the earth.",
-        interactions: {
-          pray: {
-            text:
-              "You kneel and speak a prayer to a god with no name. For a moment, " +
-              "you feel steadier than you have in days.",
-            setsFlag: "prayed_at_shrine",
-          },
-        },
+        id: "carved_names",
+        name: "names",
+        synonyms: ["carved names", "bark"],
+        description: "Names carved into the bark, some fresh, some worn nearly smooth.",
+        onInspect:
+          "Most names are strangers'. One, near the bottom, is carved deeper than " +
+          "the rest, like whoever wrote it wanted to make sure it would last: " +
+          "'Maren, who came back.'",
       },
     ],
-    itemIds: ["ancient_tome"],
+    itemIds: ["minor_healing_potion"],
     isSafe: true,
-    tags: ["ruins", "surface"],
-    mapPosition: { x: 0, y: -5, z: 0 },
+    tags: ["forest", "surface", "landmark"],
+    mapPosition: { x: -1, y: -3, z: 1 },
+  },
+  {
+    id: "twisted_hollow",
+    name: "Twisted Hollow",
+    region: "dark_forest",
+    shortDescription: "Trees grown into knots too deliberate to be natural.",
+    longDescription:
+      "The trees here don't grow so much as writhe, trunks knotted into shapes that " +
+      "look almost like gestures. Something about the hollow makes you very aware " +
+      "of how far you are from anywhere safe.",
+    exits: [
+      { direction: "east", to: "dark_forest_edge" },
+      { direction: "south", to: "witchlight_bog" },
+    ],
+    monsterIds: ["dark_elf_blade"],
+    isDark: true,
+    tags: ["dark_forest", "surface", "eerie"],
+    mapPosition: { x: -1, y: -4, z: 0 },
+  },
+  {
+    id: "witchlight_bog",
+    name: "Witchlight Bog",
+    region: "dark_forest",
+    shortDescription: "Pale lights hover over black, still water.",
+    longDescription:
+      "Small lights drift over the bog's surface, always just far enough away to " +
+      "not quite be explainable. Old stories call them witchlights and say " +
+      "following them never ends well. You believe the stories more, out here.",
+    exits: [
+      { direction: "north", to: "twisted_hollow" },
+      { direction: "south", to: "hollow_altar" },
+    ],
+    monsterIds: ["cave_spider"],
+    isDark: true,
+    tags: ["dark_forest", "surface", "eerie", "water"],
+    mapPosition: { x: -1, y: -5, z: 0 },
+  },
+  {
+    id: "hollow_altar",
+    name: "Hollow Altar",
+    region: "dark_forest",
+    shortDescription: "A second altar, older and less welcoming than the shrine.",
+    longDescription:
+      "Unlike the shrine to the east, nothing about this altar invites prayer. It's " +
+      "carved with the same spiral as the root you found, repeated obsessively, " +
+      "as if whoever made it was trying to convince themselves of something.",
+    exits: [{ direction: "north", to: "witchlight_bog" }],
+    itemIds: ["rune_of_warding"],
+    tags: ["dark_forest", "surface", "eerie", "landmark"],
+    mapPosition: { x: -1, y: -6, z: 0 },
   },
 ];
+

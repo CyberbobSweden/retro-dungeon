@@ -3,6 +3,17 @@ import { VILLAGE_LOCATIONS } from "./village";
 import { FOREST_LOCATIONS } from "./forest";
 import { CAVE_LOCATIONS } from "./cave";
 import { DUNGEON_LOCATIONS } from "./dungeon";
+import { CRYPT_LOCATIONS } from "./crypt";
+import { SEWER_LOCATIONS } from "./sewers";
+import { UNDERGROUND_CITY_LOCATIONS } from "./underground_city";
+import { RUINS_LOCATIONS } from "./ruins";
+import { CASTLE_LOCATIONS } from "./castle";
+import { ANCIENT_TEMPLE_LOCATIONS } from "./ancient_temple";
+import { ICE_CAVES_LOCATIONS } from "./ice_caves";
+import { VOLCANO_LOCATIONS } from "./volcano";
+import { DESERT_LOCATIONS } from "./desert";
+import { MOUNTAINS_LOCATIONS } from "./mountains";
+import { SWAMP_LOCATIONS } from "./swamp";
 
 /**
  * This is the full hand-authored world for the current milestone: a
@@ -34,6 +45,17 @@ export const ALL_LOCATIONS: Location[] = [
   ...FOREST_LOCATIONS,
   ...CAVE_LOCATIONS,
   ...DUNGEON_LOCATIONS,
+  ...CRYPT_LOCATIONS,
+  ...SEWER_LOCATIONS,
+  ...UNDERGROUND_CITY_LOCATIONS,
+  ...RUINS_LOCATIONS,
+  ...CASTLE_LOCATIONS,
+  ...ANCIENT_TEMPLE_LOCATIONS,
+  ...ICE_CAVES_LOCATIONS,
+  ...VOLCANO_LOCATIONS,
+  ...DESERT_LOCATIONS,
+  ...MOUNTAINS_LOCATIONS,
+  ...SWAMP_LOCATIONS,
 ];
 
 export const LOCATIONS_BY_ID: Record<string, Location> = Object.fromEntries(

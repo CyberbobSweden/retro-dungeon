@@ -12,108 +12,106 @@ export const DUNGEON_LOCATIONS: Location[] = [
     exits: [
       { direction: "up", to: "cave_tunnel" },
       { direction: "down", to: "crypt_corridor" },
+      { direction: "east", to: "guard_room" },
     ],
     isDark: true,
     tags: ["dungeon", "underground"],
     mapPosition: { x: 2, y: -3, z: -2 },
   },
   {
-    id: "crypt_corridor",
-    name: "Crypt Corridor",
-    region: "crypt",
-    shortDescription: "A long hall lined with sealed alcoves.",
+    id: "guard_room",
+    name: "Guard Room",
+    region: "dungeon",
+    shortDescription: "Rusted weapon racks line a room built for waiting.",
     longDescription:
-      "Dozens of stone alcoves line the walls, each sealed with a name-plate too " +
-      "worn to read. Dust lies thick except for a single dragged trail down the " +
-      "center of the floor — something has been through here recently.",
+      "A long table, split down the middle, still holds a game of dice frozen mid-turn. " +
+      "Whatever ended that game happened fast enough that no one bothered to pick up the dice.",
     exits: [
-      { direction: "up", to: "dungeon_entrance" },
-      { direction: "east", to: "ossuary" },
-      { direction: "west", to: "forgotten_crypt" },
+      { direction: "west", to: "dungeon_entrance" },
+      { direction: "east", to: "cell_block" },
+      { direction: "north", to: "armory", locked: true, keyItemId: "rusty_key" },
+      { direction: "up", to: "castle_dungeon_stair" },
     ],
+    itemIds: ["wooden_shield"],
     monsterIds: ["skeleton_warrior"],
     isDark: true,
-    tags: ["crypt", "underground"],
-    mapPosition: { x: 2, y: -3, z: -3 },
+    tags: ["dungeon", "underground"],
+    mapPosition: { x: 3, y: -3, z: -2 },
   },
   {
-    id: "ossuary",
-    name: "Ossuary",
-    region: "crypt",
-    shortDescription: "Bones, sorted and stacked with unsettling care.",
+    id: "armory",
+    name: "Dungeon Armory",
+    region: "dungeon",
+    shortDescription: "Weapon racks, most empty, a few still worth taking.",
     longDescription:
-      "Femurs and skulls are arranged floor to ceiling in deliberate patterns — " +
-      "not a mass grave, but a monument. Whoever built this wanted the dead " +
-      "remembered, or wanted something to feed on them in an orderly fashion.",
-    exits: [{ direction: "west", to: "crypt_corridor" }],
-    itemIds: ["scroll_of_fireball"],
-    monsterIds: ["crypt_wraith"],
+      "Whoever looted this place first was in a hurry — a few good pieces were left " +
+      "behind, tucked in a corner crate as if someone meant to come back for them.",
+    exits: [{ direction: "south", to: "guard_room" }],
+    itemIds: ["chainmail", "iron_sword"],
     isDark: true,
-    tags: ["crypt", "underground"],
-    mapPosition: { x: 3, y: -3, z: -3 },
+    tags: ["dungeon", "underground", "treasure"],
+    mapPosition: { x: 3, y: -2, z: -2 },
   },
   {
-    id: "forgotten_crypt",
-    name: "Forgotten Crypt",
-    region: "crypt",
-    shortDescription: "The air here is colder than it has any right to be.",
+    id: "cell_block",
+    name: "Cell Block",
+    region: "dungeon",
+    shortDescription: "A row of iron-barred cells, doors hanging open.",
     longDescription:
-      "A single sarcophagus dominates the room, its lid cracked and shifted, just " +
-      "enough to suggest it was opened from the inside. Frost rims every surface " +
-      "despite the depth. This is the room from the old map's warning.",
-    exits: [{ direction: "east", to: "crypt_corridor" }],
+      "Most of the cells are empty, doors long since rusted open. Scratches cover the " +
+      "walls of the last one — tally marks, mostly, and one word repeated so many " +
+      "times it stopped looking like a word.",
+    exits: [
+      { direction: "west", to: "guard_room" },
+      { direction: "down", to: "treasure_vault" },
+      { direction: "south", to: "torture_chamber" },
+    ],
+    itemIds: ["rusty_key"],
     features: [
       {
-        id: "sarcophagus",
-        name: "sarcophagus",
-        description: "A stone coffin, lid ajar. Cold radiates from the gap.",
-        interactions: {
-          open: {
-            text:
-              "Inside, wrapped in rotted silk, lies a wax-sealed letter and a " +
-              "seal bearing a crest you don't recognize — yet.",
-            grantsItemId: "crypt_seal",
-            setsFlag: "opened_forgotten_sarcophagus",
-          },
-        },
+        id: "scratched_wall",
+        name: "wall",
+        synonyms: ["scratches", "tally marks"],
+        description: "Hundreds of tally marks, and one repeated word: DEEPER.",
+        onInspect:
+          "Whoever was kept here counted a very long time, and left one instruction " +
+          "for whoever found this cell next: DEEPER.",
       },
     ],
-    monsterIds: ["lich_apprentice"],
     isDark: true,
-    tags: ["crypt", "underground", "boss"],
-    mapPosition: { x: 1, y: -3, z: -3 },
+    tags: ["dungeon", "underground"],
+    mapPosition: { x: 4, y: -3, z: -2 },
   },
   {
-    id: "sewers_entrance",
-    name: "Sewer Entrance",
-    region: "sewers",
-    shortDescription: "Brick tunnels, ankle-deep in slow water.",
+    id: "treasure_vault",
+    name: "Dungeon Treasure Vault",
+    region: "dungeon",
+    shortDescription: "A reinforced chamber, guarded by something that never left.",
     longDescription:
-      "Somewhere below the village, old brickwork gives way to older brickwork. " +
-      "The water moving past your boots came from somewhere; where it's going is " +
-      "less clear.",
-    exits: [
-      { direction: "up", to: "well_shaft" },
-      { direction: "south", to: "underground_city_gate" },
-    ],
-    monsterIds: ["gelatinous_cube"],
-    isDark: true,
-    tags: ["sewers", "underground"],
-    mapPosition: { x: 0, y: 1, z: -2 },
-  },
-  {
-    id: "underground_city_gate",
-    name: "Gate of the Sunken City",
-    region: "underground_city",
-    shortDescription: "A vast stone gate, half-buried, still standing.",
-    longDescription:
-      "Beyond the sewers, the brick gives way to something far older: a gate " +
-      "carved with a script no living scholar has translated, tall enough for " +
-      "giants and wide enough for armies. Whatever built this expected visitors.",
-    exits: [{ direction: "north", to: "sewers_entrance" }],
+      "Whoever built this vault trusted the guardian more than the lock. Coins, a " +
+      "jeweled ring, and something wrapped in oilcloth are stacked on a plinth at " +
+      "the center of the room.",
+    exits: [{ direction: "up", to: "cell_block" }],
+    itemIds: ["silver_ring", "rune_of_warding"],
     monsterIds: ["stone_ogre"],
     isDark: true,
-    tags: ["underground_city", "underground", "landmark"],
-    mapPosition: { x: 0, y: 2, z: -2 },
+    tags: ["dungeon", "underground", "treasure", "boss"],
+    mapPosition: { x: 4, y: -4, z: -2 },
+  },
+  {
+    id: "torture_chamber",
+    name: "Torture Chamber",
+    region: "dungeon",
+    shortDescription: "Rusted instruments, and a room that doesn't need explaining.",
+    longDescription:
+      "Whatever this room was used for stopped a long time ago, but the tools are " +
+      "still hung neatly on the walls, each one in its place, as if someone " +
+      "intended to come back and use them again.",
+    exits: [{ direction: "north", to: "cell_block" }],
+    itemIds: ["rusty_dagger"],
+    monsterIds: ["skeleton_warrior"],
+    isDark: true,
+    tags: ["dungeon", "underground"],
+    mapPosition: { x: 5, y: -3, z: -2 },
   },
 ];

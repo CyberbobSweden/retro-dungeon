@@ -29,6 +29,7 @@ export const CAVE_LOCATIONS: Location[] = [
       { direction: "out", to: "cave_mouth" },
       { direction: "east", to: "underground_lake" },
       { direction: "down", to: "dungeon_entrance" },
+      { direction: "south", to: "mine_shaft" },
     ],
     monsterIds: ["cave_spider"],
     isDark: true,
@@ -100,5 +101,73 @@ export const CAVE_LOCATIONS: Location[] = [
     isDark: true,
     tags: ["cave", "underground", "shortcut"],
     mapPosition: { x: 3, y: -4, z: -1 },
+  },
+  {
+    id: "mine_shaft",
+    name: "Old Mine Shaft",
+    region: "mine",
+    shortDescription: "Timber supports, half-rotted, hold the ceiling up. Barely.",
+    longDescription:
+      "This was worked by hand before the cave system was ever mapped. Wooden " +
+      "supports creak overhead, some cracked clean through. Whoever mined this " +
+      "either finished the job or didn't get the chance to.",
+    exits: [
+      { direction: "north", to: "cave_tunnel" },
+      { direction: "south", to: "crystal_vein" },
+      { direction: "east", to: "collapsed_shaft" },
+    ],
+    monsterIds: ["cave_spider"],
+    isDark: true,
+    tags: ["mine", "underground"],
+    mapPosition: { x: 2, y: -4, z: -1 },
+  },
+  {
+    id: "crystal_vein",
+    name: "Crystal Vein",
+    region: "mine",
+    shortDescription: "Raw ore glitters along an exposed rock face.",
+    longDescription:
+      "Whoever dug this mine stopped right at the richest part of the vein — " +
+      "either they ran out of time, or something made them leave in a hurry. " +
+      "The ore here is worth more than everything else in the mine combined.",
+    exits: [
+      { direction: "north", to: "mine_shaft" },
+      { direction: "south", to: "flooded_gallery" },
+    ],
+    itemIds: ["iron_ore", "iron_ore", "gold_coin_pile"],
+    isSafe: true,
+    tags: ["mine", "underground", "treasure"],
+    mapPosition: { x: 2, y: -5, z: -1 },
+  },
+  {
+    id: "flooded_gallery",
+    name: "Flooded Gallery",
+    region: "mine",
+    shortDescription: "The lowest reach of the mine, half-submerged.",
+    longDescription:
+      "Groundwater claimed this level long ago. Old support beams rise out of the " +
+      "water like the ribs of something that didn't survive. Whatever the miners " +
+      "were digging toward, they never got there.",
+    exits: [{ direction: "north", to: "crystal_vein" }],
+    itemIds: ["rusty_dagger"],
+    monsterIds: ["gelatinous_cube"],
+    isDark: true,
+    tags: ["mine", "underground", "water"],
+    mapPosition: { x: 2, y: -6, z: -1 },
+  },
+  {
+    id: "collapsed_shaft",
+    name: "Collapsed Shaft",
+    region: "mine",
+    shortDescription: "The tunnel ends in a wall of rubble — mostly.",
+    longDescription:
+      "A cave-in blocks most of the passage, but a gap near the ceiling still lets " +
+      "air through from somewhere else entirely. Something is nesting in the gap.",
+    exits: [{ direction: "west", to: "mine_shaft" }],
+    itemIds: ["rusty_key"],
+    monsterIds: ["cave_spider"],
+    isDark: true,
+    tags: ["mine", "underground"],
+    mapPosition: { x: 3, y: -5, z: -1 },
   },
 ];

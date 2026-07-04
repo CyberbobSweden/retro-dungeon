@@ -287,6 +287,19 @@ export const ITEMS: Record<string, Item> = {
     weight: 0.5,
     value: 300,
   },
+  sunken_crown: {
+    id: "sunken_crown",
+    name: "Crown of the Sunken King",
+    type: "treasure",
+    rarity: "artifact",
+    description:
+      "Black stone and tarnished gold, still faintly warm. Whoever wore this ruled " +
+      "a kingdom that doesn't exist anymore, in a way that suggests it might not " +
+      "mind trying again.",
+    weight: 1,
+    value: 10000,
+    questItem: true,
+  },
 };
 
 export function getItem(id: string): Item | undefined {

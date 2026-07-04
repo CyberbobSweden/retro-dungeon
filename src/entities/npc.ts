@@ -76,6 +76,34 @@ export const NPCS: Record<string, NPC> = {
       },
     ],
   },
+  market_agnes: {
+    id: "market_agnes",
+    name: "Agnes",
+    description: "An old woman selling rope, rations, and gear from a cart with a missing wheel.",
+    dialogue: [
+      {
+        id: "greeting",
+        topic: "greeting",
+        synonyms: ["hello", "hi"],
+        text: '"Rope, rations, a decent torch. Everything a person needs to not die out there. Buying, or just looking?"',
+      },
+      {
+        id: "castle",
+        topic: "castle",
+        synonyms: ["towers", "ruins"],
+        text:
+          '"My grandmother\'s grandmother used to say there was a kingdom out past ' +
+          "the forest, before it wasn't. Nobody's gone looking in my lifetime. " +
+          'Can\'t imagine why you would either."',
+      },
+    ],
+    shopInventory: [
+      { itemId: "torch", price: 3 },
+      { itemId: "ration", price: 2 },
+      { itemId: "minor_healing_potion", price: 10 },
+      { itemId: "lantern", price: 40 },
+    ],
+  },
 };
 
 export function getNpc(id: string): NPC | undefined {

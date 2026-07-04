@@ -50,11 +50,11 @@ retro-dungeon/
 │   │   └── Parser.ts          Tokenizer + parser
 │   │
 │   ├── world/
-│   │   ├── locations/         One file per region (village.ts, forest.ts,
-│   │   │                      cave.ts, dungeon.ts) + index.ts aggregator
+│   │   ├── locations/         One file per region (16 files, 100 rooms
+│   │   │                      total) + index.ts aggregator
 │   │   ├── World.ts            Stateless queries over the world graph
 │   │   └── worldGenerator.ts   Procedural filler-room generator (see
-│   │                          "Scaling to 1000+ locations" below)
+│   │                          "Scaling further" below)
 │   │
 │   ├── entities/
 │   │   ├── items.ts            Item registry
@@ -80,6 +80,10 @@ retro-dungeon/
 │   └── ui/                    React components (terminal, status bar,
 │                               sidebar tabs, character creation)
 │
+├── docs/
+│   ├── WORLD_MAP.md            Full spoiler map of all 100 locations
+│   └── HINTS.md                 Tiered hints, soft nudge -> full spoiler
+│
 ├── index.html, vite.config.ts, tailwind.config.ts, tsconfig.json
 └── README.md
 ```
@@ -90,17 +94,31 @@ it goes through `World`. The UI never touches game logic — it calls
 current `GameState`. Every system is independently testable and
 independently replaceable.
 
-## Scaling to 1000+ locations
+## The world today
 
-The current build ships a hand-authored, fully connected slice (village
-→ forest → dark forest → cave → dungeon → crypt → sewers → underground
-city gate) so the whole loop — explore, fight, loot, quest, map — is
-playable end to end. Growing this to the design doc's 1000+ rooms is a
-content problem, not an architecture problem:
+**100 hand-authored locations across 16 regions**, fully connected and
+verified (see `docs/WORLD_MAP.md` for the complete map, the story arc,
+and exactly how it was tested — including an actual scripted playthrough
+of the engine, not just static checks):
+
+- **Surface**: Village (12 rooms), Forest (8), Dark Forest (4), Ruins (4), Castle (9)
+- **Underground, "main quest" side**: Mine/Caves (7), Dungeon (6), Crypt (8), Sewers (4), Underground City (8), Ancient Temple (6, final boss)
+- **Frontier, reached via the Hall of Waystones**: Ice Caves (5), Volcano (5), Desert (5), Mountains (5), Swamp (4)
+
+Three shortcuts tie the "separate-feeling" branches into one connected
+world: the village graveyard drops directly into the crypt catacombs, a
+hidden stair behind the castle throne drops directly into the dungeon's
+guard room, and the Hall of Waystones (found deep in the underground
+city) opens all five frontier regions from one hub.
+
+## Scaling further (toward the original 1000+ ambition)
+
+Going from 100 to 1000+ rooms from here is still a content problem, not
+an architecture problem:
 
 1. **Keep hand-authoring landmarks.** Bosses, quest hubs, and unique
    set-pieces stay hand-written, one region file at a time, exactly like
-   `village.ts` / `forest.ts` / `cave.ts` / `dungeon.ts`.
+   the 16 files already in `world/locations/`.
 2. **Generate the connective tissue.** `src/world/worldGenerator.ts`
    deterministically (seeded) generates filler corridors between
    landmarks from per-region vocabulary pools, using the exact same
@@ -118,10 +136,11 @@ content problem, not an architecture problem:
 
 ## Monster roster
 
-20 hand-authored monsters spanning goblinoids, undead, spiders, oozes,
-demons, dragons, and a final boss, plus `generateVariant()` in
-`entities/monsters.ts`, which produces Weak/Elder/Ancient tiers of any
-base monster on demand — the mechanism for reaching "300+ distinct
+25 hand-authored monsters spanning goblinoids, undead, spiders, oozes,
+demons, dragons, elementals, and frontier-region specialists (frost
+giant, sandworm, roc, bog witch, magma hound), plus `generateVariant()`
+in `entities/monsters.ts`, which produces Weak/Elder/Ancient tiers of
+any base monster on demand — the mechanism for reaching "300+ distinct
 encounters" without hand-authoring 300 stat blocks.
 
 ## Command reference
@@ -129,15 +148,15 @@ encounters" without hand-authoring 300 stat blocks.
 Movement: `go <dir>` / bare direction / `n,s,e,w,u,d`, `climb`, `enter`, `leave`
 Senses: `look`, `look <direction>`, `inspect <thing>`, `search`, `listen`, `smell`, `taste`
 Items: `take`, `drop`, `wear`/`equip`, `remove`/`unequip`, `inventory`, `use`, `drink`, `eat`
-Combat: `attack` (`kill`/`fight`/`hit`/`stab` all work), `cast <spell>`, `flee`
-World interaction: `open`, `close`, `unlock`, `push`, `pull`, `read`, `pray`, `sit`, `dig`
+Combat: `attack` (`kill`/`fight`/`hit`/`stab` all work), `attack <target> with <item>`, `cast <spell>`, `spells`, `flee`
+World interaction: `open`, `close`, `unlock`, `push`, `pull`, `read`, `pray`, `sit`, `climb`, `dig`
 Social: `talk <npc>`, `ask <npc> about <topic>`, `buy <item>`
 Meta: `stats`, `quests`, `map`, `journal`, `rest`, `save`, `help`, `hint`
 
 ## Roadmap (from the brief, not yet built)
 
 - Node.js/Express backend, accounts, cloud save, multiplayer/co-op
-- Full 1000+ room world via the generator pipeline above
+- Growing from 100 toward the design doc's 1000+ rooms via the generator pipeline above
 - Full ~300 monster roster via tiered generation across all families
 - Crafting (`craft`, `combine`) and full economy loop
 - Runtime AI-generated side quests and dialogue variation

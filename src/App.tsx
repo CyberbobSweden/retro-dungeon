@@ -9,14 +9,40 @@ import { Terminal } from "@/ui/Terminal";
 import { Sidebar } from "@/ui/Sidebar";
 import { saveSystem } from "@/systems/save/SaveSystem";
 import { useViewportHeight } from "@/ui/useViewportHeight";
+import { useMobileScreenControl } from "@/ui/useMobileScreenControl";
 
 const INTRO_TEXT =
   "You have no map.\n\nThe village of Millbrook is quiet around you. Somewhere south, " +
   "the road gives way to forest, and the forest gives way to something older.\n\n" +
   "Type `help` for commands, or just start with `look`.";
 
+function ScreenControls({ screen }: { screen: ReturnType<typeof useMobileScreenControl> }) {
+  if (!screen.canInstall && !screen.canFullscreen) return null;
+  return (
+    <div className="pointer-events-none absolute right-2 top-2 z-20 flex gap-2">
+      {screen.canInstall && (
+        <button
+          onClick={screen.promptInstall}
+          className="pointer-events-auto border border-crt-amber bg-crt-panel px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-crt-amber hover:bg-crt-amberDim/30"
+        >
+          📱 Install app
+        </button>
+      )}
+      {screen.canFullscreen && (
+        <button
+          onClick={screen.toggleFullscreen}
+          className="pointer-events-auto border border-crt-amberDim/50 bg-crt-panel px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-crt-amberDim hover:text-crt-amber"
+        >
+          {screen.isFullscreen ? "⤢ Exit fullscreen" : "⛶ Fullscreen"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   useViewportHeight();
+  const screen = useMobileScreenControl();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [engine, setEngine] = useState<GameEngine | null>(null);
 
@@ -58,9 +84,10 @@ export default function App() {
 
   if (!gameState || !engine) {
     return (
-      <div className="relative overflow-hidden bg-crt-bg" style={{ height: "var(--app-height, 100dvh)" }}>
+      <div className="relative overflow-hidden bg-crt-bg" style={{ height: "var(--app-height, 100dvh)", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)" }}>
         <div className="crt-overlay" />
         <div className="crt-vignette" />
+        <ScreenControls screen={screen} />
         {autoLoadIfAvailable && (
           <div className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center px-4">
             <button
@@ -82,10 +109,11 @@ export default function App() {
   return (
     <div
       className="relative overflow-hidden bg-crt-bg p-3 sm:p-4"
-      style={{ height: "var(--app-height, 100dvh)" }}
+      style={{ height: "var(--app-height, 100dvh)", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)" }}
     >
       <div className="crt-overlay" />
       <div className="crt-vignette" />
+      <ScreenControls screen={screen} />
       <div className="mx-auto flex h-full max-w-6xl flex-col gap-3">
         <StatusBar state={gameState} />
         <div className="grid flex-1 grid-cols-1 gap-3 overflow-hidden md:grid-cols-[1fr_320px]">
